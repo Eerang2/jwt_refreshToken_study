@@ -1,9 +1,9 @@
 package jwt_study.user.util;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,14 +11,15 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secretKeyString; // 환경 변수에서 불러온 SECRET_KEY (32바이트 이상 필수)
+    private final String secretKeyString; // 환경 변수에서 불러온 SECRET_KEY (32바이트 이상 필수)
 
     private final JwtProperties jwtProperties;
 
-    public JwtUtil(JwtProperties jwtProperties) {
+    public JwtUtil( @Value("${jwt.secret}") String secretKeyString, JwtProperties jwtProperties) {
+        this.secretKeyString = secretKeyString;
         this.jwtProperties = jwtProperties;
     }
 
@@ -61,11 +62,23 @@ public class JwtUtil {
     // ✅ **토큰 유효성 검사**
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
             return true;
-        } catch (Exception e) {
-            return false;
+        } catch (ExpiredJwtException e) {
+            log.warn("토큰이 만료됨: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            log.warn("지원하지 않는 JWT 형식: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            log.warn("잘못된 JWT: {}", e.getMessage());
+        } catch (SignatureException e) {
+            log.warn("서명 검증 실패: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.warn("JWT claims가 비어있음: {}", e.getMessage());
         }
+        return false;
     }
 
     // ✅ **토큰 만료 여부 확인**

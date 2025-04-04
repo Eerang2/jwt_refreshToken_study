@@ -1,6 +1,7 @@
 package jwt_study.user.util;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,19 @@ public class CookieUtil {
         cookie.setMaxAge((int) (jwtProperties.getRefreshTokenExpireTime() / 1000)); // 만료 시간 설정
 
         response.addCookie(cookie);
+    }
+
+    public String extractRefreshToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+
+        for (Cookie cookie : cookies) {
+            if ("refreshToken".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+
+        return null;
     }
 
 }

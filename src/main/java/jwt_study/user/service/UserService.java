@@ -46,27 +46,22 @@ public class UserService {
     }
 
     @Transactional
-    public TokenRes refreshAccessToken(String refreshToken) {
-        //  리프레시 토큰 유효성 검사
+    public TokenRes reissueAccessToken(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
             throw new ValidRefreshTokenException();
         }
 
-        // 리프레시 토큰에서 userKey 추출
         Long userKey = jwtUtil.extractUserKey(refreshToken);
 
-        // 저장된 리프레시 토큰 가져오기
-        RefreshToken storedToken = refreshTokenRepository.findByUserKey(userKey)
+        RefreshToken stored = refreshTokenRepository.findByUserKey(userKey)
                 .orElseThrow(RefreshTokenNotFoundException::new);
 
-        // 토큰이 null 이거나 일치하지 않으면 예외 처리
-        if (storedToken.getRefreshToken() == null || !storedToken.getRefreshToken().equals(refreshToken)) {
+        if (!refreshToken.equals(stored.getRefreshToken())) {
             throw new InvalidRefreshTokenException();
         }
 
-        // 새로운 액세스 토큰 발급
         String newAccessToken = jwtUtil.generateAccessToken(userKey);
 
-        return TokenRes.of(newAccessToken, refreshToken); // 기존 리프레시 토큰 유지
+        return TokenRes.of(newAccessToken, refreshToken);
     }
 }

@@ -106,7 +106,7 @@ class UserServiceTest {
                 .thenReturn("newAccessToken");
 
         // 5️⃣ 리프레시 토큰을 사용하여 새로운 액세스 토큰 발급 요청
-        TokenRes result = userService.refreshAccessToken(refreshToken);
+        TokenRes result = userService.reissueAccessToken(refreshToken);
 
         // 6️⃣ 발급된 액세스 토큰이 null이 아닌지 확인
         assertNotNull(result.getAccessToken());
